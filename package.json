@@ -4,9 +4,9 @@
   "description": "Extract normalized object, verb, property, value, and verb-code data from ToastStunt checkpoint databases.",
   "type": "module",
   "bin": {
-    "toaststunt-db-extract": "./dist/src/cli.js",
-    "toaststunt-db-inspect": "./dist/src/cli.js",
-    "toaststunt-db-validate": "./dist/src/cli.js"
+    "toaststunt-db-extract": "dist/src/cli.js",
+    "toaststunt-db-inspect": "dist/src/cli.js",
+    "toaststunt-db-validate": "dist/src/cli.js"
   },
   "types": "./dist/src/index.d.ts",
   "exports": {
