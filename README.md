@@ -4,20 +4,27 @@ Standalone Node.js/TypeScript extractor for ToastStunt checkpoint databases. It 
 
 This package only extracts canonical structured data. It does not run Tree-sitter, build call graphs, resolve inheritance calls, create Codex context, expose an MCP server, or write graph databases.
 
-## Install and Build
+## Install
 
 ```bash
-npm install
-npm run build
+npm install @sindomecorp/toaststunt-db-extractor
 ```
 
 ## CLI
+
+After installing the package, use the scoped npm package's CLI binaries:
 
 ```bash
 toaststunt-db-extract ./latest.db --out ./extract/latest --snapshot-id latest --overwrite
 toaststunt-db-inspect ./latest.db
 toaststunt-db-validate ./extract/latest
 toaststunt-db-validate ./latest.db
+```
+
+You can also run the extractor without adding it to a project first:
+
+```bash
+npx @sindomecorp/toaststunt-db-extractor ./latest.db --out ./extract/latest --overwrite
 ```
 
 Extraction options:
@@ -90,7 +97,10 @@ Object, verb, and property metadata maps are kept in memory. Property values are
 
 ## Tests
 
+For local development:
+
 ```bash
+npm install
 npm run build
 npm test
 npm run lint
