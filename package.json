@@ -8,20 +8,44 @@
     "toaststunt-db-inspect": "./dist/src/cli.js",
     "toaststunt-db-validate": "./dist/src/cli.js"
   },
+  "types": "./dist/src/index.d.ts",
   "exports": {
     ".": "./dist/src/index.js"
   },
   "files": [
-    "dist",
-    "README.md"
+    "dist/src",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
     "test": "node --test \"dist/test/**/*.js\"",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "extract": "node dist/src/cli.js"
+    "extract": "node dist/src/cli.js",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run build && npm test && npm run typecheck && npm run lint"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/SindomeCorp/toaststunt-db-extractor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SindomeCorp/toaststunt-db-extractor/issues"
+  },
+  "homepage": "https://github.com/SindomeCorp/toaststunt-db-extractor#readme",
+  "keywords": [
+    "toaststunt",
+    "lambdamoo",
+    "moo",
+    "database",
+    "extractor"
+  ],
+  "author": "SindomeCorp",
+  "license": "MIT",
   "engines": {
     "node": ">=22"
   },
@@ -31,6 +55,5 @@
     "eslint": "^10.4.1",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.61.0"
-  },
-  "license": "MIT"
+  }
 }

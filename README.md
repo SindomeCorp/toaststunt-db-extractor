@@ -96,3 +96,14 @@ npm test
 npm run lint
 npm run typecheck
 ```
+
+## Release
+
+Releases publish to npm from GitHub Actions when a `v*` tag is pushed:
+
+```bash
+npm version patch
+git push origin main --follow-tags
+```
+
+The release workflow uses npm trusted publishing and publishes `@sindomecorp/toaststunt-db-extractor` with public access.
