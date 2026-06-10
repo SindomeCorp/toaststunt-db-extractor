@@ -109,7 +109,6 @@ npm run typecheck
 
 ## Release
 
-
 Releases publish to npm from GitHub Actions when a `v*` tag is pushed:
 
 ```bash
