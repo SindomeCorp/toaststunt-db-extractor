@@ -1,0 +1,124 @@
+TOASTSTUNT-DB-EXTRACTOR-FIXTURE 1
+objects
+5
+0
+System Object
+0
+#2
+#-1
+1749512000
+-
+#1 #10 #20 #30
+-
+0
+2
+grid_utils
+some_collection
+2
+0
+#30
+#2
+5
+1
+[#1,#2,#3]
+#2
+5
+1
+Root Object
+16
+#2
+#-1
+1749512001
+#-1
+#10
+-
+0
+0
+0
+10
+Parent Object
+0
+#2
+#-1
+1749512010
+#1
+#20
+-
+0
+3
+password
+mail
+notes
+3
+0
+"secret-value"
+#2
+0
+1
+"mail body"
+#2
+5
+2
+"notes body"
+#2
+5
+20
+Child Object
+0
+#2
+#-1
+1749512020
+#10
+-
+-
+0
+4
+messages
+token
+history
+log
+5
+1
+clear
+3
+"message body"
+#2
+5
+4
+"token value"
+#2
+5
+5
+"history entry"
+#2
+5
+6
+"log entry"
+#2
+5
+30
+Grid Utils
+17
+#2
+#-1
+1749512030
+#1
+-
+-
+1
+notify alert|#2|13|0
+1
+tag_handlers
+1
+0
+map{"quote":#15856,"table":#15856,"weather":#69313}
+#2
+5
+programmed_verbs
+1
+#30:0
+this:render();
+player:tell("Done");
+$grid_utils:format(this);
+#30:notify(player);
+.
