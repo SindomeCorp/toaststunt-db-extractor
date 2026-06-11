@@ -67,7 +67,7 @@ test("extracts tiny fixture artifacts", async () => {
       assert.equal(typeof value.value.value, "string");
     }
 
-    const clear = values.find((record) => record.object === "#20" && record.propertyIndex === 1);
+    const clear = values.find((record) => record.object === "#20" && record.propertyIndex === 5);
     assert.equal(clear.value.type, "clear");
     assert.equal(clear.owner, undefined);
 
@@ -164,6 +164,11 @@ test("extracts native Format 17 fixture", async () => {
     assert.equal(result.stats.programmedVerbs, 1);
     assert.equal(result.stats.verbCodeFilesWritten, 1);
     assert.equal(result.stats.propertyValues, 1);
+
+    const propertyValues = parseJsonl(await readFile(join(outputDir, "property_values.jsonl"), "utf8"));
+    assert.deepEqual(propertyValues.map((value) => value.name), ["grid_utils"]);
+    assert.equal(propertyValues[0].propertyIndex, 0);
+    assert.equal(propertyValues[0].value.object, "#1");
 
     const coreCandidates = parseJsonl(await readFile(join(outputDir, "core_candidates.jsonl"), "utf8"));
     assert.deepEqual(coreCandidates[0], {
@@ -270,6 +275,43 @@ test("multiple parents produce computed-multiple-inheritance property confidence
       "computed-multiple-inheritance",
       "computed-multiple-inheritance"
     ]);
+  } finally {
+    await rm(outputDir, { recursive: true, force: true });
+    await rm(join(fixturePath, ".."), { recursive: true, force: true });
+  }
+});
+
+test("effective property names use object definitions before inherited definitions", async () => {
+  const fixturePath = join(await mkdtemp(join(tmpdir(), "toaststunt-fixture-")), "self-first.db");
+  const outputDir = await mkdtemp(join(tmpdir(), "toaststunt-extract-"));
+  try {
+    await writeFile(fixturePath, fixtureDb([
+      objectRecord({
+        id: 10,
+        name: "Root",
+        parents: "-",
+        children: "#20",
+        properties: ["key", "aliases", "description", "object_size"],
+        values: []
+      }),
+      objectRecord({
+        id: 20,
+        name: "System",
+        parents: "#10",
+        properties: ["command_utils"],
+        values: [
+          { index: 0, raw: "#56", owner: "#2", perms: 5 },
+          { index: 1, raw: "\"root-key\"", owner: "#2", perms: 5 }
+        ]
+      })
+    ]), "utf8");
+
+    await extractToastStuntDb({ inputPath: fixturePath, outputDir, overwrite: true });
+    const values = parseJsonl(await readFile(join(outputDir, "property_values.jsonl"), "utf8"));
+    const childValues = values.filter((value) => value.object === "#20");
+    assert.deepEqual(childValues.map((value) => value.name), ["command_utils", "key"]);
+    assert.equal(childValues[0].nameConfidence, "direct");
+    assert.equal(childValues[0].value.object, "#56");
   } finally {
     await rm(outputDir, { recursive: true, force: true });
     await rm(join(fixturePath, ".."), { recursive: true, force: true });

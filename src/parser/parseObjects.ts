@@ -42,7 +42,6 @@ export function computeEffectiveProperties(
     if (!object) return;
     const parentIds = object.parents.map((parent) => Number.parseInt(parent.slice(1), 10)).filter((id) => id >= 0);
     const nextConfidence = parentIds.length > 1 ? "computed-multiple-inheritance" : inheritedConfidence;
-    for (const parentId of parentIds) visit(parentId, nextConfidence);
     for (const definition of propertyDefinitionsByObject.get(currentId) ?? []) {
       result.push({
         name: definition.name,
@@ -50,6 +49,7 @@ export function computeEffectiveProperties(
         confidence: currentId === objectId ? "direct" : nextConfidence
       });
     }
+    for (const parentId of parentIds) visit(parentId, nextConfidence);
   };
 
   visit(objectId, "computed");

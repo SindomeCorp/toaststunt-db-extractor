@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4 - 2026-06-11
+
+- Fix native ToastStunt property value name alignment by ordering effective properties like ToastStunt: object-defined properties first, followed by inherited ancestor properties.
+
 ## 0.1.3 - 2026-06-11
 
 - Add stable public TypeScript schema exports for extractor output records.
