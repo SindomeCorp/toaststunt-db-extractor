@@ -1,7 +1,7 @@
 import type { CoreCandidateRecord, ExtractErrorSummary, NormalizedExtractOptions, ParsedDatabase, VerbRecord } from "../model/types.js";
 import { DbCursor } from "../reader/DbCursor.js";
 import { LineReader } from "../reader/LineReader.js";
-import { createEmptyStats } from "../emit/StatsCollector.js";
+import { createEmptyStats, syncStatsCounters } from "../emit/StatsCollector.js";
 import { parseHeader } from "./parseHeader.js";
 import { parseNativeDatabase } from "./parseNativeDatabase.js";
 import { parseObjects, materializePropertyValues } from "./parseObjects.js";
@@ -104,6 +104,7 @@ export async function parseDatabase(options: NormalizedExtractOptions): Promise<
     stats.passwordPropertiesRedacted = propertyValues.filter((value) => value.value.redacted).length;
     stats.warnings = errors.filter((error) => !error.fatal).length;
     stats.errors = errors.filter((error) => error.fatal).length;
+    syncStatsCounters(stats);
 
     return {
       header,
@@ -132,7 +133,7 @@ export async function parseDatabase(options: NormalizedExtractOptions): Promise<
       coreCandidates: [],
       programs: [],
       errors: [summary],
-      stats: { ...createEmptyStats(), errors: 1 }
+      stats: syncStatsCounters({ ...createEmptyStats(), errors: 1 })
     };
   } finally {
     reader.close();

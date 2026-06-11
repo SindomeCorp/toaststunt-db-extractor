@@ -15,7 +15,7 @@ import type {
 import { JsonlWriter } from "../emit/JsonlWriter.js";
 import { VerbCodeWriter } from "../emit/VerbCodeWriter.js";
 import { writeManifest } from "../emit/ManifestWriter.js";
-import { createEmptyStats } from "../emit/StatsCollector.js";
+import { createEmptyStats, syncStatsCounters } from "../emit/StatsCollector.js";
 import { decodeObjectFlags, isRecycled } from "../model/flags.js";
 import { decodePermissions } from "../model/permissions.js";
 import { decodePrepositions } from "../model/prepositions.js";
@@ -120,7 +120,7 @@ export async function extractNativeDatabaseToOutput(
       }
       verb.hasProgram = true;
       if (options.includeVerbCode) {
-        const written = await verbCodeWriter.write(objectId, verbIndex, verb.primaryName, `${codeLines.join("\n")}\n`);
+        const written = await verbCodeWriter.write(objectId, verbIndex, verb.primaryName ?? verb.names[0] ?? "verb", `${codeLines.join("\n")}\n`);
         verb.codeHash = written.codeHash;
         verb.codeLineCount = written.codeLineCount;
         verb.sourcePath = written.sourcePath;
@@ -147,6 +147,7 @@ export async function extractNativeDatabaseToOutput(
 
     stats.warnings = errors.filter((error) => !error.fatal).length;
     stats.errors = errors.filter((error) => error.fatal).length;
+    syncStatsCounters(stats);
     await writeFinalArtifacts(options, startedAt, header, stats, errors);
     await rm(tempValuesPath, { force: true });
 
@@ -165,6 +166,7 @@ export async function extractNativeDatabaseToOutput(
     };
     errors.push(fatal);
     stats.errors = 1;
+    syncStatsCounters(stats);
     await closeQuietly(objectWriter);
     await closeQuietly(propertyWriter);
     await closeQuietly(rawPropertyValueWriter);
@@ -290,6 +292,7 @@ export async function parseNativeDatabase(options: NormalizedExtractOptions): Pr
     stats.coreCandidates = coreCandidates.length;
     stats.passwordPropertiesRedacted = propertyValues.filter((value) => value.value.redacted).length;
     stats.warnings = errors.length;
+    syncStatsCounters(stats);
 
     return {
       header: { dbVersion: headerLine, rawHeaderLines: [headerLine] },
@@ -317,7 +320,7 @@ export async function parseNativeDatabase(options: NormalizedExtractOptions): Pr
         line: typeof error === "object" && error !== null && "line" in error ? Number(error.line) : cursor.lineNumber,
         message: error instanceof Error ? error.message : String(error)
       }],
-      stats: { ...createEmptyStats(), errors: 1 }
+      stats: syncStatsCounters({ ...createEmptyStats(), errors: 1 })
     };
   } finally {
     reader.close();
@@ -601,6 +604,7 @@ async function writeFinalArtifacts(
   stats: ReturnType<typeof createEmptyStats>,
   errors: ExtractErrorSummary[]
 ): Promise<void> {
+  syncStatsCounters(stats);
   await writeJsonlFile(join(options.outputDir, "errors.jsonl"), errors, options.pretty);
   await writeFile(join(options.outputDir, "stats.json"), `${JSON.stringify(stats, null, 2)}\n`, "utf8");
   await writeManifest({

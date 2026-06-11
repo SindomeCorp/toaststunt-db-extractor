@@ -8,6 +8,7 @@ import type {
   ValidationResult
 } from "./model/types.js";
 import { JsonlWriter } from "./emit/JsonlWriter.js";
+import { syncStatsCounters } from "./emit/StatsCollector.js";
 import { writeManifest } from "./emit/ManifestWriter.js";
 import { VerbCodeWriter } from "./emit/VerbCodeWriter.js";
 import { parseDatabase, looksLikeNativeToastStuntDatabase } from "./parser/parseDatabase.js";
@@ -16,14 +17,40 @@ import { inspectDatabase } from "./inspect/inspectDatabase.js";
 import { validateToastStuntDbPath } from "./validate/validateExtraction.js";
 
 export type {
+  CoreCollectionCandidateRecord,
   CoreCandidateRecord,
+  CoreObjectCandidateRecord,
   EffectiveProperty,
+  ExtractedJsonlRecord,
+  ExtractedObjectRecord,
+  ExtractedPropertyDefinitionRecord,
+  ExtractedPropertyValueRecord,
+  ExtractedVerbRecord,
+  ExtractedValue,
+  ExtractedValueBase,
+  ExtractedClearValue,
+  ExtractedNoneValue,
+  ExtractedIntValue,
+  ExtractedFloatValue,
+  ExtractedStringValue,
+  ExtractedObjectValue,
+  ExtractedErrorValue,
+  ExtractedListValue,
+  ExtractedMapEntry,
+  ExtractedMapValue,
+  ExtractedRedactedValue,
+  ExtractedTruncatedValue,
+  ExtractedUnknownValue,
+  ExtractedWaifValue,
+  ExtractErrorRecord,
   ExtractErrorSummary,
+  ExtractManifest,
   ExtractProgressEvent,
   ExtractResult,
   ExtractStats,
   ExtractToastStuntDbOptions,
   InspectResult,
+  ObjectRef,
   ObjectRecord,
   PropertyDefinitionRecord,
   PropertyValueRecord,
@@ -55,7 +82,7 @@ export async function extractToastStuntDb(options: ExtractToastStuntDbOptions): 
     for (const program of parsed.programs) {
       const verb = verbById.get(`#${program.objectId}:${program.verbIndex}`);
       if (!verb) continue;
-      const written = await writer.write(program.objectId, program.verbIndex, verb.primaryName, program.code);
+      const written = await writer.write(program.objectId, program.verbIndex, verb.primaryName ?? verb.names[0] ?? "verb", program.code);
       verb.codeHash = written.codeHash;
       verb.codeLineCount = written.codeLineCount;
       verb.sourcePath = written.sourcePath;
@@ -63,6 +90,7 @@ export async function extractToastStuntDb(options: ExtractToastStuntDbOptions): 
       parsed.stats.verbCodeFilesWritten += 1;
     }
   }
+  syncStatsCounters(parsed.stats);
 
   normalized.onProgress?.({ phase: "emit", message: "Writing extraction artifacts" });
   await writeJsonl(join(normalized.outputDir, "objects.jsonl"), parsed.objects, normalized.pretty);

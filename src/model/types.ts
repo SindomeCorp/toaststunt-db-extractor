@@ -1,4 +1,5 @@
-export type ObjectId = `#${number}`;
+export type ObjectRef = `#${number}`;
+export type ObjectId = ObjectRef;
 
 export interface ExtractToastStuntDbOptions {
   inputPath: string;
@@ -22,8 +23,19 @@ export interface NormalizedExtractOptions extends Required<Omit<ExtractToastStun
 }
 
 export interface ExtractProgressEvent {
-  phase: string;
+  phase:
+    | "inspect"
+    | "objects"
+    | "programmed_verbs"
+    | "property_values"
+    | "core_candidates"
+    | "write_manifest"
+    | "done"
+    | "parse"
+    | "emit";
   message?: string;
+  current?: number;
+  total?: number;
   count?: number;
 }
 
@@ -31,7 +43,7 @@ export interface ExtractResult {
   snapshotId: string;
   outputDir: string;
   stats: ExtractStats;
-  errors: ExtractErrorSummary[];
+  errors?: ExtractErrorRecord[];
 }
 
 export interface InspectResult {
@@ -56,26 +68,82 @@ export interface ValidationResult {
   stats?: ExtractStats;
 }
 
-export interface ExtractErrorSummary {
+export interface ExtractErrorRecord {
   fatal: boolean;
-  section: string;
+  section?: string;
+  phase?: string;
   line?: number;
   message: string;
-  object?: ObjectId;
+  context?: Record<string, unknown>;
+  object?: ObjectRef;
   verbIndex?: number;
 }
 
+export type ExtractErrorSummary = ExtractErrorRecord;
+
 export interface ExtractStats {
+  objectCount: number;
+  recycledObjectCount: number;
+  verbMetadataCount: number;
+  programmedVerbCount: number;
+  propertyDefinitionCount: number;
+  propertyValueCount: number;
+  verbCodeFileCount: number;
+  coreCandidateCount: number;
+  warningCount: number;
+  fatalErrorCount: number;
+  passwordPropertiesRedacted?: number;
+  /**
+   * @deprecated Use objectCount.
+   */
   objects: number;
+  /**
+   * @deprecated Use verbMetadataCount.
+   */
   verbs: number;
+  /**
+   * @deprecated Use programmedVerbCount.
+   */
   programmedVerbs: number;
+  /**
+   * @deprecated Use propertyDefinitionCount.
+   */
   properties: number;
+  /**
+   * @deprecated Use propertyValueCount.
+   */
   propertyValues: number;
+  /**
+   * @deprecated Use verbCodeFileCount.
+   */
   verbCodeFilesWritten: number;
+  /**
+   * @deprecated Use coreCandidateCount.
+   */
   coreCandidates: number;
+  /**
+   * @deprecated Use fatalErrorCount.
+   */
   errors: number;
+  /**
+   * @deprecated Use warningCount.
+   */
   warnings: number;
-  passwordPropertiesRedacted: number;
+}
+
+export interface ExtractManifest {
+  snapshotId: string;
+  sourcePath?: string;
+  sourceSizeBytes?: number;
+  sourceMtime?: string;
+  extractorVersion?: string;
+  startedAt?: string;
+  completedAt?: string;
+  format?: {
+    server?: string;
+    dbVersion?: string;
+  };
+  options?: Record<string, unknown>;
 }
 
 export interface DbHeader {
@@ -87,20 +155,22 @@ export interface ObjectRecord {
   kind: "object";
   objectId: number;
   id: ObjectId;
-  name: string;
-  owner: ObjectId;
-  location: ObjectId;
-  lastMove: number;
+  name?: string;
+  owner?: ObjectId;
+  location?: ObjectId;
+  lastMove?: number;
   parents: ObjectId[];
-  children: ObjectId[];
-  contents: ObjectId[];
-  flagsRaw: number;
-  flags: string[];
-  verbCount: number;
-  propertyDefinitionCount: number;
-  propertyValueCount: number;
+  children?: ObjectId[];
+  contents?: ObjectId[];
+  flagsRaw?: number;
+  flags?: string[];
+  verbCount?: number;
+  propertyDefinitionCount?: number;
+  propertyValueCount?: number;
   recycled: boolean;
 }
+
+export type ExtractedObjectRecord = ObjectRecord;
 
 export interface VerbRecord {
   kind: "verb";
@@ -108,19 +178,21 @@ export interface VerbRecord {
   objectId: number;
   object: ObjectId;
   verbIndex: number;
-  namesRaw: string;
+  namesRaw?: string;
   names: string[];
-  primaryName: string;
-  owner: ObjectId;
-  permissionsRaw: number;
-  permissions: string[];
-  prepositionsRaw: number;
-  prepositions: string[];
+  primaryName?: string;
+  owner?: ObjectId;
+  permissionsRaw?: number;
+  permissions?: string[];
+  prepositionsRaw?: number;
+  prepositions?: string[];
   codeHash?: string;
   codeLineCount?: number;
   sourcePath?: string;
   hasProgram: boolean;
 }
+
+export type ExtractedVerbRecord = VerbRecord;
 
 export interface PropertyDefinitionRecord {
   kind: "property_definition";
@@ -130,6 +202,8 @@ export interface PropertyDefinitionRecord {
   name: string;
   definitionIndex: number;
 }
+
+export type ExtractedPropertyDefinitionRecord = PropertyDefinitionRecord;
 
 export type NameConfidence = "direct" | "computed" | "computed-multiple-inheritance" | "unknown";
 
@@ -143,47 +217,148 @@ export interface PropertyValueRecord {
   owner?: ObjectId;
   permissionsRaw?: number;
   permissions?: string[];
-  value: ToastValueSummary;
+  definedOn?: ObjectRef;
+  value: ExtractedValue;
 }
 
-export interface CoreCandidateRecord {
-  kind: "core_candidate" | "core_collection_candidate";
-  symbol: string;
+export type ExtractedPropertyValueRecord = PropertyValueRecord;
+
+export type CoreCandidateRecord = CoreObjectCandidateRecord | CoreCollectionCandidateRecord;
+
+export interface CoreObjectCandidateRecord {
+  kind: "core_candidate";
+  symbol: `$${string}`;
   property: string;
-  sourceObject: ObjectId;
-  target?: ObjectId;
-  objectRefs?: ObjectId[];
-  confidence: "object-property-on-root" | "collection-property-on-root";
+  sourceObject: ObjectRef;
+  target: ObjectRef;
+  confidence: "object-property-on-root" | string;
 }
 
-export type ToastValue =
-  | { type: "clear" }
-  | { type: "none" }
-  | { type: "int"; value: number | string }
-  | { type: "float"; value: number | string }
-  | { type: "string"; value: string; truncated?: boolean }
-  | { type: "object"; object: ObjectId }
-  | { type: "error"; name?: string; code?: number }
-  | { type: "list"; items: ToastValue[]; truncated?: boolean }
-  | { type: "map"; entries: ToastMapEntry[]; truncated?: boolean }
-  | { type: "waif"; summary: unknown; truncated?: boolean }
-  | { type: "unknown"; rawType: number | string; raw?: string };
-
-export interface ToastMapEntry {
-  key: ToastValue;
-  value: ToastValue;
+export interface CoreCollectionCandidateRecord {
+  kind: "core_collection_candidate";
+  symbol: `$${string}`;
+  property: string;
+  sourceObject: ObjectRef;
+  objectRefs: ObjectRef[];
+  confidence: "collection-property-on-root" | string;
 }
 
-export interface ToastValueSummary {
+export type ExtractedValue =
+  | ExtractedClearValue
+  | ExtractedNoneValue
+  | ExtractedIntValue
+  | ExtractedFloatValue
+  | ExtractedStringValue
+  | ExtractedObjectValue
+  | ExtractedErrorValue
+  | ExtractedListValue
+  | ExtractedMapValue
+  | ExtractedRedactedValue
+  | ExtractedTruncatedValue
+  | ExtractedUnknownValue
+  | ExtractedWaifValue
+  | ToastValueSummary;
+
+export interface ExtractedValueBase {
   type: string;
   value?: unknown;
-  entries?: ToastMapEntry[];
-  items?: ToastValue[];
-  object?: ObjectId;
-  objectRefs?: ObjectId[];
+  objectRefs?: ObjectRef[];
+  truncated?: boolean;
+  redacted?: boolean;
+}
+
+export interface ExtractedClearValue extends ExtractedValueBase {
+  type: "clear";
+}
+
+export interface ExtractedNoneValue extends ExtractedValueBase {
+  type: "none";
+}
+
+export interface ExtractedIntValue extends ExtractedValueBase {
+  type: "int";
+  value: number | string;
+}
+
+export interface ExtractedFloatValue extends ExtractedValueBase {
+  type: "float";
+  value: number | string;
+}
+
+export interface ExtractedStringValue extends ExtractedValueBase {
+  type: "string";
+  value: string;
+}
+
+export interface ExtractedObjectValue extends ExtractedValueBase {
+  type: "object";
+  object: ObjectRef;
+}
+
+export interface ExtractedErrorValue extends ExtractedValueBase {
+  type: "error";
+  name?: string;
+  code?: number;
+}
+
+export interface ExtractedListValue extends ExtractedValueBase {
+  type: "list";
+  items: ExtractedValue[];
+}
+
+export interface ExtractedMapEntry {
+  key: ExtractedValue;
+  value: ExtractedValue;
+}
+
+export interface ExtractedMapValue extends ExtractedValueBase {
+  type: "map";
+  entries?: ExtractedMapEntry[];
+  value?: Record<string, unknown>;
+}
+
+export interface ExtractedRedactedValue extends ExtractedValueBase {
+  type: "redacted";
+  reason: string;
+  redacted: true;
+}
+
+export interface ExtractedTruncatedValue extends ExtractedValueBase {
+  type: "truncated";
+  reason: string;
+  truncated: true;
+}
+
+export interface ExtractedUnknownValue extends ExtractedValueBase {
+  type: "unknown";
+  rawType?: number | string;
+  raw?: string;
+}
+
+export interface ExtractedWaifValue extends ExtractedValueBase {
+  type: "waif";
+  summary?: unknown;
+}
+
+export type ToastValue = ExtractedValue;
+
+export interface ToastMapEntry {
+  key: ExtractedValue;
+  value: ExtractedValue;
+}
+
+export interface ToastValueSummary extends ExtractedValueBase {
+  entries?: ExtractedMapEntry[];
+  items?: ExtractedValue[];
+  object?: ObjectRef;
   truncated: boolean;
   redacted: boolean;
   reason?: string;
+  name?: string;
+  code?: number;
+  rawType?: number | string;
+  raw?: string;
+  summary?: unknown;
 }
 
 export interface EffectiveProperty {
@@ -203,3 +378,11 @@ export interface ParsedDatabase {
   errors: ExtractErrorSummary[];
   stats: ExtractStats;
 }
+
+export type ExtractedJsonlRecord =
+  | ExtractedObjectRecord
+  | ExtractedVerbRecord
+  | ExtractedPropertyDefinitionRecord
+  | ExtractedPropertyValueRecord
+  | CoreCandidateRecord
+  | ExtractErrorRecord;

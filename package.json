@@ -1,20 +1,29 @@
 {
   "name": "@sindomecorp/toaststunt-db-extractor",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Extract normalized object, verb, property, value, and verb-code data from ToastStunt checkpoint databases.",
   "type": "module",
+  "main": "./dist/index.js",
   "bin": {
     "toaststunt-db-extract": "dist/src/cli.js",
     "toaststunt-db-inspect": "dist/src/cli.js",
     "toaststunt-db-validate": "dist/src/cli.js"
   },
-  "types": "./dist/src/index.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/src/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "files": [
+    "dist/index.js",
+    "dist/index.js.map",
+    "dist/index.d.ts",
+    "dist/index.d.ts.map",
     "dist/src",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

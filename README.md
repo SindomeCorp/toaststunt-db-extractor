@@ -65,6 +65,26 @@ const validation = await validateToastStuntDb("./extract/latest");
 
 `validateToastStuntDb()` and `toaststunt-db-validate` accept either an extraction output directory or a checkpoint DB file. Directories get artifact validation, including JSONL sanity checks and verb-code file existence. DB files get parser validation with line-numbered fatal errors.
 
+## TypeScript Types
+
+This package exports TypeScript types for all extractor output records:
+
+- `ExtractManifest`
+- `ExtractedObjectRecord`
+- `ExtractedVerbRecord`
+- `ExtractedPropertyDefinitionRecord`
+- `ExtractedPropertyValueRecord`
+- `CoreCandidateRecord`
+- `ExtractErrorRecord`
+- `ExtractStats`
+
+```ts
+import {
+  type ExtractedVerbRecord,
+  type CoreCandidateRecord
+} from "@sindomecorp/toaststunt-db-extractor";
+```
+
 ## Output
 
 The extractor writes:

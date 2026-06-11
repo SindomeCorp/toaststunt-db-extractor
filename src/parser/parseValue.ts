@@ -204,34 +204,55 @@ export function summarizeValue(value: ToastValue, inheritedTruncated = false): T
 
   switch (value.type) {
     case "object":
-      return { type: "object", object: value.object, objectRefs, truncated, redacted: false };
+      return { type: "object", ...(value.object ? { object: value.object } : {}), objectRefs, truncated, redacted: false };
     case "string":
     case "int":
     case "float":
       return { type: value.type, value: value.value, objectRefs, truncated, redacted: false };
     case "list":
-      return { type: "list", items: value.items, objectRefs, truncated, redacted: false };
+      return { type: "list", ...(value.items ? { items: value.items } : {}), objectRefs, truncated, redacted: false };
     case "map":
-      return { type: "map", entries: value.entries, objectRefs, truncated, redacted: false };
+      return { type: "map", ...(value.entries ? { entries: value.entries } : {}), objectRefs, truncated, redacted: false };
     case "clear":
     case "none":
       return { type: value.type, objectRefs, truncated, redacted: false };
     case "error":
-      return { type: "error", value: { code: value.code, name: value.name }, objectRefs, truncated, redacted: false };
+      return {
+        type: "error",
+        value: { code: value.code, name: value.name },
+        ...(value.code !== undefined ? { code: value.code } : {}),
+        ...(value.name !== undefined ? { name: value.name } : {}),
+        objectRefs,
+        truncated,
+        redacted: false
+      };
     case "waif":
-      return { type: "waif", value: value.summary, objectRefs, truncated, redacted: false };
+      return { type: "waif", value: value.summary, summary: value.summary, objectRefs, truncated, redacted: false };
     case "unknown":
-      return { type: "unknown", value: value.raw ?? value.rawType, objectRefs, truncated, redacted: false };
+      return {
+        type: "unknown",
+        value: value.raw ?? value.rawType,
+        ...(value.raw !== undefined ? { raw: value.raw } : {}),
+        ...(value.rawType !== undefined ? { rawType: value.rawType } : {}),
+        objectRefs,
+        truncated,
+        redacted: false
+      };
+    case "redacted":
+      return { type: "redacted", ...(value.reason ? { reason: value.reason } : {}), objectRefs, truncated, redacted: true };
+    case "truncated":
+      return { type: "truncated", ...(value.reason ? { reason: value.reason } : {}), objectRefs, truncated: true, redacted: false };
   }
+  return { type: "unknown", value, objectRefs, truncated, redacted: false };
 }
 
 export function collectObjectRefs(value: ToastValue): ObjectId[] {
   const refs = new Set<ObjectId>();
   const visit = (item: ToastValue): void => {
-    if (item.type === "object") refs.add(item.object);
-    if (item.type === "list") item.items.forEach(visit);
+    if (item.type === "object" && item.object) refs.add(item.object);
+    if (item.type === "list") (item.items ?? []).forEach(visit);
     if (item.type === "map") {
-      for (const entry of item.entries) {
+      for (const entry of item.entries ?? []) {
         visit(entry.key);
         visit(entry.value);
       }
