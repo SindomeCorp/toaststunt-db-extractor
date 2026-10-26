@@ -137,3 +137,14 @@ git push origin main --follow-tags
 ```
 
 The release workflow uses npm trusted publishing and publishes `@sindomecorp/toaststunt-db-extractor` with public access.
+
+## Node.js 26 validation
+
+Validated on Linux with **Node.js 26.12.1** on **2026-10-26**. The TypeScript build and compiled automated tests passed using test fixtures.
+
+With Node.js 26.12.1 selected, reproduce the checks with:
+
+```sh
+npm run build
+npm test
+```
